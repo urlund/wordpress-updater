@@ -88,16 +88,24 @@ class ProjectConfig
             'repo' => 'repo',
             'tested' => 'tested',
             'requires_php' => 'requires-php',
-            'config' => 'config',
             'sections_dir' => 'sections-dir',
             'source' => 'source',
             'output_dir' => 'output-dir',
+            'banners' => 'banners',
+            'icons' => 'icons',
+            'upgrade_notice' => 'upgrade_notice',
+            'screenshot_url' => 'screenshot_url',
         );
 
         foreach ($map as $configKey => $cliKey) {
-            if (!isset($cliOptions[$cliKey]) && isset($this->data[$configKey]) && $this->data[$configKey] !== '') {
-                $cliOptions[$cliKey] = $this->data[$configKey];
+            if (isset($cliOptions[$cliKey]) || !isset($this->data[$configKey])) {
+                continue;
             }
+            $value = $this->data[$configKey];
+            if ($value === '' || $value === array()) {
+                continue;
+            }
+            $cliOptions[$cliKey] = $value;
         }
 
         if (!isset($cliOptions['type'])) {

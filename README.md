@@ -12,7 +12,9 @@ Requirements: PHP 7.4+, `ext-curl`, `ext-zip`, `ext-json`. WordPress 5.0+ for th
 
 ## Quick start (CLI)
 
-Configure once in your project’s `composer.json`:
+Configure once in your project’s `composer.json`.
+
+**Plugin** — use `banners`, `icons`, and optionally `upgrade_notice` (shown in the plugin details / update UI):
 
 ```json
 {
@@ -23,13 +25,22 @@ Configure once in your project’s `composer.json`:
       "slug": "my-plugin",
       "repo": "owner/my-plugin",
       "tested": "6.7",
-      "output_dir": "dist"
+      "output_dir": "dist",
+      "banners": {
+        "low": "https://example.com/banner-772x250.jpg",
+        "high": "https://example.com/banner-1544x500.jpg"
+      },
+      "icons": {
+        "1x": "https://example.com/icon-128x128.png",
+        "2x": "https://example.com/icon-256x256.png"
+      },
+      "upgrade_notice": "Please update."
     }
   }
 }
 ```
 
-For themes:
+**Theme** — use `screenshot_url` (WordPress theme details use a single screenshot, not plugin banners/icons):
 
 ```json
 {
@@ -40,7 +51,8 @@ For themes:
       "slug": "my-theme",
       "repo": "owner/my-theme",
       "tested": "6.7",
-      "output_dir": "dist"
+      "output_dir": "dist",
+      "screenshot_url": "https://example.com/screenshot.png"
     }
   }
 }
@@ -76,19 +88,24 @@ Then: `composer run wp-release -- patch --publish`.
 
 ### `extra.wordpress-updater` keys
 
-| Key | Description |
-|-----|-------------|
-| `type` | `plugin` or `theme` |
-| `plugin` | Path to main plugin PHP file (plugins) |
-| `stylesheet` | Path to `style.css` (themes; default `style.css`) |
-| `slug` | Slug / folder name inside the ZIP |
-| `repo` | GitHub `owner/repo` |
-| `tested` | WordPress “tested up to” |
-| `requires_php` | Minimum PHP version |
-| `config` | JSON file for banners/icons/upgrade notice |
-| `sections_dir` | Directory with section markdown/text files (default: directory of the plugin/theme file) |
-| `source` | Source directory to package (default: cwd) |
-| `output_dir` | Output directory (default: `dist`) |
+| Key | Applies to | Description |
+|-----|------------|-------------|
+| `type` | both | `plugin` or `theme` |
+| `plugin` | plugin | Path to main plugin PHP file |
+| `stylesheet` | theme | Path to `style.css` (default `style.css`) |
+| `slug` | both | Slug / folder name inside the ZIP |
+| `repo` | both | GitHub `owner/repo` |
+| `tested` | both | WordPress “tested up to” |
+| `requires_php` | both | Minimum PHP version |
+| `banners` | plugin | Banner image URLs (`low` 772×250, `high` 1544×500) |
+| `icons` | plugin | Icon image URLs (`1x`, `2x`, optionally `svg`) |
+| `upgrade_notice` | plugin | Text shown with the plugin update |
+| `screenshot_url` | theme | Theme screenshot URL for the details modal |
+| `sections_dir` | both | Directory with section markdown/text files (default: directory of the plugin/theme file) |
+| `source` | both | Source directory to package (default: cwd) |
+| `output_dir` | both | Output directory (default: `dist`) |
+
+Image URLs must be publicly reachable; the CLI does not upload those images. `banners` / `icons` / `upgrade_notice` are used by the plugin updater; `screenshot_url` by the theme updater.
 
 Download URLs are built as:
 

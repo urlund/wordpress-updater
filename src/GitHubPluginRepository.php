@@ -78,6 +78,7 @@ class GitHubPluginRepository extends AbstractGitHubRepository
             'sections' => $metadata->sections ?? array(),
             'banners' => $metadata->banners ?? array(),
             'icons' => $metadata->icons ?? array(),
+            'upgrade_notice' => $metadata->upgrade_notice ?? '',
         );
     }
 

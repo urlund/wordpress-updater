@@ -23,5 +23,6 @@
         "2x": "https://example.com/icon-256x256.png"
     },
     "upgrade_notice": "Please update.",
+    "screenshot_url": "https://example.com/screenshot.png",
     "sha256": "optional-hash-of-the-zip"
 }

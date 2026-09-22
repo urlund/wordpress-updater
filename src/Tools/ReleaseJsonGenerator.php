@@ -24,6 +24,7 @@ class ReleaseJsonGenerator extends AbstractCli
         'icons' => array(),
         'trunk' => '',
         'upgrade_notice' => '',
+        'screenshot_url' => '',
     );
 
     protected function parseCliOptions()
@@ -40,7 +41,6 @@ class ReleaseJsonGenerator extends AbstractCli
             'tested:',
             'requires-php:',
             'sections-dir:',
-            'config:',
             'version:',
             'zip:',
             'composer:',
@@ -102,7 +102,6 @@ class ReleaseJsonGenerator extends AbstractCli
     {
         $headerData = $this->parseHeaderFile($this->options['file']);
         $sections = $this->loadSections();
-        $config = $this->loadConfig();
 
         $downloadUrl = $this->options['download-url'] ?? '';
         if ($downloadUrl === '' && !empty($this->options['repo'])) {
@@ -128,9 +127,10 @@ class ReleaseJsonGenerator extends AbstractCli
             'download_link' => $downloadUrl,
             'trunk' => $this->defaults['trunk'],
             'sections' => array_merge($this->defaults['sections'], $sections),
-            'banners' => $config['banners'] ?? $this->defaults['banners'],
-            'icons' => $config['icons'] ?? $this->defaults['icons'],
-            'upgrade_notice' => $config['upgrade_notice'] ?? $this->defaults['upgrade_notice'],
+            'banners' => $this->options['banners'] ?? $this->defaults['banners'],
+            'icons' => $this->options['icons'] ?? $this->defaults['icons'],
+            'upgrade_notice' => $this->options['upgrade_notice'] ?? $this->defaults['upgrade_notice'],
+            'screenshot_url' => $this->options['screenshot_url'] ?? $this->defaults['screenshot_url'],
         );
 
         if (isset($this->options['zip']) && is_string($this->options['zip']) && file_exists($this->options['zip'])) {
@@ -250,23 +250,6 @@ class ReleaseJsonGenerator extends AbstractCli
         return $sections;
     }
 
-    private function loadConfig()
-    {
-        if (!isset($this->options['config'])) {
-            return array();
-        }
-        $configFile = $this->options['config'];
-        if (!file_exists($configFile)) {
-            throw new Exception('Config file does not exist: ' . $configFile);
-        }
-        $content = file_get_contents($configFile);
-        $config = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('Invalid JSON in config file: ' . json_last_error_msg());
-        }
-        return $config;
-    }
-
     private function processMarkdown($content)
     {
         $content = trim($content);
@@ -364,7 +347,6 @@ class ReleaseJsonGenerator extends AbstractCli
         echo "  --tested=VERSION       WordPress tested-up-to\n";
         echo "  --requires-php=VERSION Minimum PHP version\n";
         echo "  --sections-dir=DIR     Markdown sections directory\n";
-        echo "  --config=FILE          Banners/icons JSON\n";
         echo "  --composer=FILE        Path to composer.json\n";
         echo "  --help, -h             Show help\n";
     }

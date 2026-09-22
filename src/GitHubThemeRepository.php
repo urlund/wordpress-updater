@@ -64,7 +64,7 @@ class GitHubThemeRepository extends AbstractGitHubRepository
             'name' => $metadata->name,
             'version' => $metadata->version,
             'author' => $metadata->author ?? '',
-            'screenshot_url' => '',
+            'screenshot_url' => $metadata->screenshot_url ?? '',
             'requires' => $metadata->requires ?? '',
             'requires_php' => $metadata->requires_php ?? '',
             'sections' => $metadata->sections ?? array(),
