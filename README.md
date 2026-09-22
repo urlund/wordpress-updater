@@ -46,17 +46,33 @@ For themes:
 }
 ```
 
-Release:
+Release (CLIs are installed to `vendor/bin/`):
 
 ```bash
-composer run wp-release -- patch
-composer run wp-release -- minor --commit --tag --publish
-composer run wp-release -- patch --dry-run
+./vendor/bin/wp-release patch
+./vendor/bin/wp-release minor --commit --tag --publish
+./vendor/bin/wp-release patch --dry-run
 ```
 
 `wp-release` runs: **bump → zip → release.json** (and **publish** only with `--publish`).
 
 Publishing requires a GitHub token via `--token=…` or the `GITHUB_TOKEN` environment variable (e.g. `export GITHUB_TOKEN=ghp_…`).
+
+Composer does not inherit scripts from dependencies. To use `composer run wp-release`, add them to your project’s `composer.json`:
+
+```json
+{
+  "scripts": {
+    "wp-json": "wp-json",
+    "wp-zip": "wp-zip",
+    "wp-publish": "wp-publish",
+    "wp-version": "wp-version",
+    "wp-release": "wp-release"
+  }
+}
+```
+
+Then: `composer run wp-release -- patch --publish`.
 
 ### `extra.wordpress-updater` keys
 
@@ -125,10 +141,10 @@ Attach `release.json` and the versioned ZIP to each GitHub release. The updater 
 | `wp-release` | Full pipeline |
 
 ```bash
-composer run wp-version -- --plugin=my-plugin.php patch
-composer run wp-version -- --type=theme --stylesheet=style.css minor --commit --tag
-composer run wp-json -- --type=plugin --plugin=my-plugin.php --output=dist/release.json
-composer run wp-publish -- --repo=owner/repo --zip=dist/my-plugin-1.0.1.zip --json=dist/release.json --create
+./vendor/bin/wp-version --plugin=my-plugin.php patch
+./vendor/bin/wp-version --type=theme --stylesheet=style.css minor --commit --tag
+./vendor/bin/wp-json --type=plugin --plugin=my-plugin.php --output=dist/release.json
+./vendor/bin/wp-publish --repo=owner/repo --zip=dist/my-plugin-1.0.1.zip --json=dist/release.json --create
 ```
 
 Git flags on version bump are opt-in: `--commit`, `--tag` (requires `--commit`), `--push`. Use `--bump-composer` only if you also want to bump Composer’s top-level `version`.
@@ -161,7 +177,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          composer run wp-release -- ${{ github.event.inputs.bump }} \
+          ./vendor/bin/wp-release ${{ github.event.inputs.bump }} \
             --commit --tag --push --publish
 ```
 
