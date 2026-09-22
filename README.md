@@ -185,4 +185,4 @@ jobs:
 
 ## License
 
-GPL v2 or later
+MIT
