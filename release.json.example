@@ -1,0 +1,27 @@
+{
+    "name": "My Awesome Plugin",
+    "slug": "my-awesome-plugin",
+    "version": "1.2.3",
+    "type": "plugin",
+    "tested": "6.7",
+    "requires": "5.0",
+    "requires_php": "7.4",
+    "author": "Your Name",
+    "author_profile": "https://yourwebsite.com",
+    "last_updated": "2024-10-08 12:00:00",
+    "download_link": "https://github.com/user/repo/releases/download/v1.2.3/my-awesome-plugin-1.2.3.zip",
+    "sections": {
+        "description": "Plugin or theme description.",
+        "changelog": "= 1.2.3 =\n* Improvements"
+    },
+    "banners": {
+        "low": "https://example.com/banner-772x250.jpg",
+        "high": "https://example.com/banner-1544x500.jpg"
+    },
+    "icons": {
+        "1x": "https://example.com/icon-128x128.png",
+        "2x": "https://example.com/icon-256x256.png"
+    },
+    "upgrade_notice": "Please update.",
+    "sha256": "optional-hash-of-the-zip"
+}

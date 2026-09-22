@@ -1,0 +1,47 @@
+{
+    "name": "urlund/wordpress-updater",
+    "type": "library",
+    "description": "WordPress plugin and theme updater with GitHub integration and CLI release tools",
+    "version": "1.0.0",
+    "license": "GPLv2",
+    "autoload": {
+        "psr-4": {
+            "Urlund\\WordPress\\Updater\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Henrik Urlund"
+        }
+    ],
+    "bin": [
+        "bin/wp-json",
+        "bin/wp-zip",
+        "bin/wp-publish",
+        "bin/wp-version",
+        "bin/wp-release"
+    ],
+    "scripts": {
+        "wp-json": "bin/wp-json",
+        "wp-zip": "bin/wp-zip",
+        "wp-publish": "bin/wp-publish",
+        "wp-version": "bin/wp-version",
+        "wp-release": "bin/wp-release"
+    },
+    "scripts-descriptions": {
+        "wp-json": "Generate release.json from plugin or theme headers",
+        "wp-zip": "Package plugin/theme files into a ZIP archive",
+        "wp-publish": "Publish ZIP and release.json to GitHub",
+        "wp-version": "Bump plugin or theme version",
+        "wp-release": "Bump, zip, generate release.json, and optionally publish"
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-curl": "*",
+        "ext-zip": "*",
+        "ext-json": "*"
+    },
+    "config": {
+        "bin-dir": "bin"
+    }
+}

@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+$binDir = __DIR__;
+require_once $binDir . '/../src/Tools/CliBootstrap.php';
+use Urlund\WordPress\Updater\Tools\CliBootstrap;
+use Urlund\WordPress\Updater\Tools\ZipPackager;
+if (!extension_loaded('zip')) {
+    echo "\033[31m✗ Error: PHP ZIP extension is required.\033[0m\n";
+    exit(1);
+}
+CliBootstrap::run(ZipPackager::class, $binDir, 'src/Tools/ZipPackager.php');

@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+$binDir = __DIR__;
+require_once $binDir . '/../src/Tools/CliBootstrap.php';
+use Urlund\WordPress\Updater\Tools\CliBootstrap;
+use Urlund\WordPress\Updater\Tools\GitHubPublisher;
+if (!extension_loaded('curl')) {
+    echo "\033[31m✗ Error: PHP cURL extension is required.\033[0m\n";
+    exit(1);
+}
+CliBootstrap::run(GitHubPublisher::class, $binDir, 'src/Tools/GitHubPublisher.php');

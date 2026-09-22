@@ -1,0 +1,7 @@
+#!/usr/bin/env php
+<?php
+$binDir = __DIR__;
+require_once $binDir . '/../src/Tools/CliBootstrap.php';
+use Urlund\WordPress\Updater\Tools\CliBootstrap;
+use Urlund\WordPress\Updater\Tools\ReleaseJsonGenerator;
+CliBootstrap::run(ReleaseJsonGenerator::class, $binDir, 'src/Tools/ReleaseJsonGenerator.php');

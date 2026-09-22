@@ -1,0 +1,7 @@
+#!/usr/bin/env php
+<?php
+$binDir = __DIR__;
+require_once $binDir . '/../src/Tools/CliBootstrap.php';
+use Urlund\WordPress\Updater\Tools\CliBootstrap;
+use Urlund\WordPress\Updater\Tools\VersionBump;
+CliBootstrap::run(VersionBump::class, $binDir, 'src/Tools/VersionBump.php');

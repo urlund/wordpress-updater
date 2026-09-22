@@ -1,0 +1,30 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Generated release artifacts
+/release.json
+*.zip
+
+# Logs & caches
+*.log
+*.cache
+.phpunit.result.cache
+.php-cs-fixer.cache
+.phpstan.cache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
