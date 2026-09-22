@@ -56,7 +56,7 @@ composer run wp-release -- patch --dry-run
 
 `wp-release` runs: **bump → zip → release.json** (and **publish** only with `--publish`).
 
-Metadata is always named **`release.json`** (not `plugin.json`, and never WordPress’s native `theme.json`).
+Publishing requires a GitHub token via `--token=…` or the `GITHUB_TOKEN` environment variable (e.g. `export GITHUB_TOKEN=ghp_…`).
 
 ### `extra.wordpress-updater` keys
 
