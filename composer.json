@@ -3,7 +3,7 @@
     "type": "library",
     "description": "WordPress plugin and theme updater with GitHub integration and CLI release tools",
     "version": "1.0.0",
-    "license": "GPLv2",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Urlund\\WordPress\\Updater\\": "src/"
