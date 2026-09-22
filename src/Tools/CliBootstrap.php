@@ -57,6 +57,7 @@ class CliBootstrap
     {
         $base = $binDir . '/../src/Tools/';
         $files = array(
+            'EnvLoader.php',
             'ProjectConfig.php',
             'AbstractCli.php',
             'ReleaseJsonGenerator.php',
@@ -89,6 +90,14 @@ class CliBootstrap
         }
 
         self::autoload($binDir);
+
+        self::requireClass(
+            __NAMESPACE__ . '\\EnvLoader',
+            $binDir . '/../src/Tools/EnvLoader.php'
+        );
+        if (class_exists(__NAMESPACE__ . '\\EnvLoader')) {
+            EnvLoader::load(getcwd());
+        }
 
         if (!class_exists($class)) {
             self::loadTools($binDir);

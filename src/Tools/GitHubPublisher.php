@@ -105,7 +105,7 @@ class GitHubPublisher extends AbstractCli
             throw new Exception('release.json not found: ' . $this->options['json']);
         }
         if (!$this->isDryRun() && empty($this->options['token']) && getenv('GITHUB_TOKEN') === false) {
-            throw new Exception('GitHub token required via --token or GITHUB_TOKEN env var');
+            throw new Exception('GitHub token required via --token, GITHUB_TOKEN env, or .env');
         }
     }
 
@@ -233,7 +233,7 @@ class GitHubPublisher extends AbstractCli
         echo "  --repo=owner/repo   GitHub repository (required, or composer extra)\n";
         echo "  --zip=FILE          Path to plugin ZIP file (required)\n";
         echo "  --json=FILE         Path to release.json (required, for version)\n";
-        echo "  --token=TOKEN       GitHub token (optional, else use GITHUB_TOKEN env)\n";
+        echo "  --token=TOKEN       GitHub token (optional; else GITHUB_TOKEN env or .env)\n";
         echo "  --create            Create release if it doesn't exist\n";
         echo "  --composer=FILE     Path to composer.json for project config\n";
         echo "  --dry-run           Print actions without calling GitHub\n";

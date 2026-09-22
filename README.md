@@ -74,7 +74,7 @@ Image URLs must be publicly reachable; the CLI does not upload images.
 
 `wp-release` runs **bump → zip → release.json**. Pass `--publish` to upload to GitHub. Pass `--no-dev` to install production Composer dependencies before packaging, then restore `require-dev` afterward.
 
-Publishing needs a token: `--token=…` or `GITHUB_TOKEN` (e.g. `export GITHUB_TOKEN=ghp_…`).
+Publishing needs a token: `--token=…`, `GITHUB_TOKEN` in the environment (e.g. `export GITHUB_TOKEN=ghp_…`), or `GITHUB_TOKEN=…` in a project `.env` (loaded automatically).
 
 Download URLs are built as:
 
