@@ -8,13 +8,17 @@ GitHub-based updates for WordPress **plugins and themes**, plus CLI tools to bum
 composer require urlund/wordpress-updater
 ```
 
-Requirements: PHP 7.4+, `ext-curl`, `ext-zip`, `ext-json`. WordPress 5.0+ for the runtime updaters.
+Requires PHP 7.4+ (`ext-curl`, `ext-zip`, `ext-json`) and WordPress 5.0+ for the runtime updaters.
 
-## Quick start (CLI)
+CLIs install to `vendor/bin/`. Composer does not inherit scripts from dependencies; call the binaries directly, or add optional [Composer scripts](#optional-composer-scripts).
 
-Configure once in your project’s `composer.json`.
+---
 
-**Plugin** — use `banners`, `icons`, and optionally `upgrade_notice` (shown in the plugin details / update UI):
+## Quick start
+
+### 1. Configure `composer.json`
+
+**Plugin** — details UI uses `banners`, `icons`, and optional `upgrade_notice`:
 
 ```json
 {
@@ -40,7 +44,7 @@ Configure once in your project’s `composer.json`.
 }
 ```
 
-**Theme** — use `screenshot_url` (WordPress theme details use a single screenshot, not plugin banners/icons):
+**Theme** — details UI uses a single `screenshot_url` (not plugin banners/icons):
 
 ```json
 {
@@ -58,7 +62,9 @@ Configure once in your project’s `composer.json`.
 }
 ```
 
-Release (CLIs are installed to `vendor/bin/`):
+Image URLs must be publicly reachable; the CLI does not upload images.
+
+### 2. Release
 
 ```bash
 ./vendor/bin/wp-release patch
@@ -66,54 +72,50 @@ Release (CLIs are installed to `vendor/bin/`):
 ./vendor/bin/wp-release patch --dry-run
 ```
 
-`wp-release` runs: **bump → zip → release.json** (and **publish** only with `--publish`).
+`wp-release` runs **bump → zip → release.json**. Pass `--publish` to upload to GitHub.
 
-Publishing requires a GitHub token via `--token=…` or the `GITHUB_TOKEN` environment variable (e.g. `export GITHUB_TOKEN=ghp_…`).
-
-Composer does not inherit scripts from dependencies. To use `composer run wp-release`, add them to your project’s `composer.json`:
-
-```json
-{
-  "scripts": {
-    "wp-json": "wp-json",
-    "wp-zip": "wp-zip",
-    "wp-publish": "wp-publish",
-    "wp-version": "wp-version",
-    "wp-release": "wp-release"
-  }
-}
-```
-
-Then: `composer run wp-release -- patch --publish`.
-
-### `extra.wordpress-updater` keys
-
-| Key | Applies to | Description |
-|-----|------------|-------------|
-| `type` | both | `plugin` or `theme` |
-| `plugin` | plugin | Path to main plugin PHP file |
-| `stylesheet` | theme | Path to `style.css` (default `style.css`) |
-| `slug` | both | Slug / folder name inside the ZIP |
-| `repo` | both | GitHub `owner/repo` |
-| `tested` | both | WordPress “tested up to” |
-| `requires_php` | both | Minimum PHP version |
-| `banners` | plugin | Banner image URLs (`low` 772×250, `high` 1544×500) |
-| `icons` | plugin | Icon image URLs (`1x`, `2x`, optionally `svg`) |
-| `upgrade_notice` | plugin | Text shown with the plugin update |
-| `screenshot_url` | theme | Theme screenshot URL for the details modal |
-| `sections_dir` | both | Directory with section markdown/text files (default: directory of the plugin/theme file) |
-| `source` | both | Source directory to package (default: cwd) |
-| `output_dir` | both | Output directory (default: `dist`) |
-
-Image URLs must be publicly reachable; the CLI does not upload those images. `banners` / `icons` / `upgrade_notice` are used by the plugin updater; `screenshot_url` by the theme updater.
+Publishing needs a token: `--token=…` or `GITHUB_TOKEN` (e.g. `export GITHUB_TOKEN=ghp_…`).
 
 Download URLs are built as:
 
 `https://github.com/{repo}/releases/download/v{version}/{slug}-{version}.zip`
 
+---
+
+## Configuration reference
+
+### Shared keys
+
+| Key | Description |
+|-----|-------------|
+| `type` | `plugin` or `theme` |
+| `slug` | Slug / folder name inside the ZIP |
+| `repo` | GitHub `owner/repo` |
+| `tested` | WordPress “tested up to” |
+| `requires_php` | Minimum PHP version |
+| `sections_dir` | Directory with section files (default: directory of the main file) |
+| `source` | Source directory to package (default: cwd) |
+| `output_dir` | Output directory (default: `dist`) |
+
+### Plugin-only keys
+
+| Key | Description |
+|-----|-------------|
+| `plugin` | Path to main plugin PHP file |
+| `banners` | Banner URLs: `low` (772×250), `high` (1544×500) |
+| `icons` | Icon URLs: `1x`, `2x`, optional `svg` |
+| `upgrade_notice` | Text shown with the plugin update |
+
+### Theme-only keys
+
+| Key | Description |
+|-----|-------------|
+| `stylesheet` | Path to `style.css` (default: `style.css`) |
+| `screenshot_url` | Screenshot URL for the theme details modal |
+
 ### Section files
 
-`wp-json` fills `release.json` → `sections` from files in `sections_dir` (or `--sections-dir`). The first matching filename per section wins; content is lightly converted from Markdown to HTML.
+`wp-json` fills `release.json` → `sections` from `sections_dir` (or `--sections-dir`). First matching filename wins; Markdown is lightly converted to HTML.
 
 | Section | Filenames (first match) |
 |---------|-------------------------|
@@ -124,8 +126,6 @@ Download URLs are built as:
 | `screenshots` | `screenshots.md`, `screenshots.txt` |
 | `other_notes` | `notes.md`, `notes.txt`, `NOTES.md` |
 
-Example layout:
-
 ```text
 my-plugin/
   my-plugin.php
@@ -135,11 +135,13 @@ my-plugin/
     faq.md
 ```
 
-With `"sections_dir": "sections"` in `extra.wordpress-updater` (or `--sections-dir=sections`).
+Set `"sections_dir": "sections"` in `extra.wordpress-updater`.
 
 ---
 
-## Runtime: WordPress updates from GitHub
+## Runtime (WordPress)
+
+Attach `release.json` and the versioned ZIP to each GitHub release. The updater prefers `release.json`, then falls back to parsing the ZIP.
 
 ### Plugin
 
@@ -169,11 +171,9 @@ GitHubThemeRepository::getInstance(
 );
 ```
 
-Attach `release.json` and the versioned ZIP to each GitHub release. The updater prefers `release.json`, then falls back to parsing the ZIP.
-
 ---
 
-## Individual CLI tools
+## CLI tools
 
 | Command | Role |
 |---------|------|
@@ -191,6 +191,22 @@ Attach `release.json` and the versioned ZIP to each GitHub release. The updater 
 ```
 
 Git flags on version bump are opt-in: `--commit`, `--tag` (requires `--commit`), `--push`. Use `--bump-composer` only if you also want to bump Composer’s top-level `version`.
+
+### Optional Composer scripts
+
+```json
+{
+  "scripts": {
+    "wp-json": "wp-json",
+    "wp-zip": "wp-zip",
+    "wp-publish": "wp-publish",
+    "wp-version": "wp-version",
+    "wp-release": "wp-release"
+  }
+}
+```
+
+Then: `composer run wp-release -- patch --publish`.
 
 ---
 
