@@ -76,6 +76,7 @@ class ZipPackager extends AbstractCli
             'no-defaults',
             'version:',
             'composer:',
+            'no-dev',
             'help',
         );
 
@@ -103,7 +104,24 @@ class ZipPackager extends AbstractCli
     public function package()
     {
         $this->validateOptions();
-        return $this->createZipPackage();
+
+        $noDev = $this->wantsNoDev();
+        $shouldRestore = false;
+
+        if ($noDev) {
+            $this->info('Installing production dependencies (--no-dev)');
+            $this->composerInstallNoDev(false);
+            $shouldRestore = true;
+        }
+
+        try {
+            return $this->createZipPackage();
+        } finally {
+            if ($shouldRestore) {
+                $this->info('Restoring development dependencies');
+                $this->composerInstallRestore(false);
+            }
+        }
     }
 
     private function validateOptions()
@@ -331,6 +349,7 @@ class ZipPackager extends AbstractCli
         echo "  --exclude=PATTERNS     Additional exclusion patterns (comma-separated)\n";
         echo "  --no-defaults          Don't use default exclusion patterns\n";
         echo "  --composer=FILE        Path to composer.json for project config\n";
+        echo "  --no-dev               Install without require-dev before zip, restore after\n";
         echo "  --help, -h             Show this help message\n";
     }
 }

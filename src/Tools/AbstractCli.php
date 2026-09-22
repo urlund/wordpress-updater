@@ -7,6 +7,8 @@
 
 namespace Urlund\WordPress\Updater\Tools;
 
+use Exception;
+
 abstract class AbstractCli
 {
     /** @var array */
@@ -163,6 +165,95 @@ abstract class AbstractCli
     protected function isDryRun()
     {
         return array_key_exists('dry-run', $this->options);
+    }
+
+    /**
+     * Whether --no-dev was passed.
+     */
+    protected function wantsNoDev()
+    {
+        return array_key_exists('no-dev', $this->options);
+    }
+
+    /**
+     * Directory for Composer install (source, composer.json dir, or cwd).
+     *
+     * @return string
+     */
+    protected function resolveComposerWorkingDir()
+    {
+        if (!empty($this->options['source']) && is_string($this->options['source'])) {
+            return $this->options['source'];
+        }
+
+        if (!empty($this->options['composer']) && is_string($this->options['composer'])) {
+            $dir = dirname($this->options['composer']);
+            if ($dir !== '' && $dir !== '.') {
+                return $dir;
+            }
+        }
+
+        return getcwd();
+    }
+
+    /**
+     * Run composer install without require-dev (for packaging).
+     *
+     * @param bool $dryRun
+     * @throws Exception
+     */
+    protected function composerInstallNoDev($dryRun = false)
+    {
+        $workingDir = $this->resolveComposerWorkingDir();
+        $cmd = 'composer install --no-dev --optimize-autoloader --working-dir=' . escapeshellarg($workingDir);
+
+        if ($dryRun) {
+            $this->info('[dry-run] Would run: ' . $cmd);
+            return;
+        }
+
+        $this->info('Running: ' . $cmd);
+        $this->runComposerCommand($cmd, 'composer install --no-dev failed');
+    }
+
+    /**
+     * Restore full composer install including require-dev.
+     *
+     * @param bool $dryRun
+     * @throws Exception
+     */
+    protected function composerInstallRestore($dryRun = false)
+    {
+        $workingDir = $this->resolveComposerWorkingDir();
+        $cmd = 'composer install --working-dir=' . escapeshellarg($workingDir);
+
+        if ($dryRun) {
+            $this->info('[dry-run] Would run: ' . $cmd);
+            return;
+        }
+
+        $this->info('Restoring: ' . $cmd);
+        $this->runComposerCommand($cmd, 'composer install (restore) failed');
+    }
+
+    /**
+     * @param string $cmd
+     * @param string $errorMessage
+     * @throws Exception
+     */
+    private function runComposerCommand($cmd, $errorMessage)
+    {
+        $out = array();
+        $code = 0;
+        exec($cmd . ' 2>&1', $out, $code);
+
+        if (!empty($out)) {
+            echo implode("\n", $out) . "\n";
+        }
+
+        if ($code !== 0) {
+            throw new Exception($errorMessage . ' (exit ' . $code . ')');
+        }
     }
 
     protected function success($message)

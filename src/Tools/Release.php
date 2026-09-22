@@ -37,6 +37,7 @@ class Release extends AbstractCli
                 'tag',
                 'push',
                 'bump-composer',
+                'no-dev',
                 'dry-run',
                 'help',
             ),
@@ -128,76 +129,92 @@ class Release extends AbstractCli
         $zipPath = $outputDir . DIRECTORY_SEPARATOR . $slug . '-' . $version . '.zip';
         $jsonPath = $outputDir . DIRECTORY_SEPARATOR . ProjectConfig::RELEASE_JSON;
 
-        $this->info('Step 2/4: Package ZIP');
-        if ($dryRun) {
-            $this->info('[dry-run] Would create ' . $zipPath);
-        } else {
-            $zipOptions = array(
-                'name' => $slug,
+        $noDev = $this->wantsNoDev();
+        $shouldRestore = false;
+
+        if ($noDev) {
+            $this->info('Installing production dependencies (--no-dev)');
+            $this->composerInstallNoDev($dryRun);
+            $shouldRestore = true;
+        }
+
+        try {
+            $this->info('Step 2/4: Package ZIP');
+            if ($dryRun) {
+                $this->info('[dry-run] Would create ' . $zipPath);
+            } else {
+                $zipOptions = array(
+                    'name' => $slug,
+                    'slug' => $slug,
+                    'version' => $version,
+                    'output' => $zipPath,
+                    'source' => $this->options['source'] ?? getcwd(),
+                );
+                $packager = new ZipPackager($zipOptions);
+                $zipPath = $packager->package();
+            }
+
+            $this->info('Step 3/4: Generate release.json');
+            $jsonOptions = array(
+                'type' => $type,
+                'file' => $file,
                 'slug' => $slug,
                 'version' => $version,
-                'output' => $zipPath,
-                'source' => $this->options['source'] ?? getcwd(),
-            );
-            $packager = new ZipPackager($zipOptions);
-            $zipPath = $packager->package();
-        }
-
-        $this->info('Step 3/4: Generate release.json');
-        $jsonOptions = array(
-            'type' => $type,
-            'file' => $file,
-            'slug' => $slug,
-            'version' => $version,
-            'output' => $jsonPath,
-            'zip' => $zipPath,
-        );
-        if ($type === 'theme') {
-            $jsonOptions['stylesheet'] = $file;
-        } else {
-            $jsonOptions['plugin'] = $file;
-        }
-        if (!empty($this->options['repo'])) {
-            $jsonOptions['repo'] = $this->options['repo'];
-            $jsonOptions['download-url'] = ProjectConfig::buildDownloadUrl($this->options['repo'], $slug, $version);
-        }
-        foreach (array('tested', 'requires-php', 'sections-dir', 'banners', 'icons', 'upgrade_notice', 'screenshot_url') as $key) {
-            if (!empty($this->options[$key])) {
-                $jsonOptions[$key] = $this->options[$key];
-            }
-        }
-
-        if ($dryRun) {
-            $this->info('[dry-run] Would write ' . $jsonPath);
-            if (!empty($jsonOptions['download-url'])) {
-                $this->info('[dry-run] download_link: ' . $jsonOptions['download-url']);
-            }
-        } else {
-            $generator = new ReleaseJsonGenerator($jsonOptions);
-            $jsonPath = $generator->generate();
-        }
-
-        if (isset($this->options['publish'])) {
-            $this->info('Step 4/4: Publish to GitHub');
-            if (empty($this->options['repo'])) {
-                throw new Exception('--repo is required for --publish (or set extra.wordpress-updater.repo)');
-            }
-            $publishOptions = array(
-                'repo' => $this->options['repo'],
+                'output' => $jsonPath,
                 'zip' => $zipPath,
-                'json' => $jsonPath,
-                'create' => true,
             );
-            if (!empty($this->options['token'])) {
-                $publishOptions['token'] = $this->options['token'];
+            if ($type === 'theme') {
+                $jsonOptions['stylesheet'] = $file;
+            } else {
+                $jsonOptions['plugin'] = $file;
             }
+            if (!empty($this->options['repo'])) {
+                $jsonOptions['repo'] = $this->options['repo'];
+                $jsonOptions['download-url'] = ProjectConfig::buildDownloadUrl($this->options['repo'], $slug, $version);
+            }
+            foreach (array('tested', 'requires-php', 'sections-dir', 'banners', 'icons', 'upgrade_notice', 'screenshot_url') as $key) {
+                if (!empty($this->options[$key])) {
+                    $jsonOptions[$key] = $this->options[$key];
+                }
+            }
+
             if ($dryRun) {
-                $publishOptions['dry-run'] = true;
+                $this->info('[dry-run] Would write ' . $jsonPath);
+                if (!empty($jsonOptions['download-url'])) {
+                    $this->info('[dry-run] download_link: ' . $jsonOptions['download-url']);
+                }
+            } else {
+                $generator = new ReleaseJsonGenerator($jsonOptions);
+                $jsonPath = $generator->generate();
             }
-            $publisher = new GitHubPublisher($publishOptions);
-            $publisher->publish();
-        } else {
-            $this->info('Step 4/4: Publish skipped (pass --publish to upload)');
+
+            if (isset($this->options['publish'])) {
+                $this->info('Step 4/4: Publish to GitHub');
+                if (empty($this->options['repo'])) {
+                    throw new Exception('--repo is required for --publish (or set extra.wordpress-updater.repo)');
+                }
+                $publishOptions = array(
+                    'repo' => $this->options['repo'],
+                    'zip' => $zipPath,
+                    'json' => $jsonPath,
+                    'create' => true,
+                );
+                if (!empty($this->options['token'])) {
+                    $publishOptions['token'] = $this->options['token'];
+                }
+                if ($dryRun) {
+                    $publishOptions['dry-run'] = true;
+                }
+                $publisher = new GitHubPublisher($publishOptions);
+                $publisher->publish();
+            } else {
+                $this->info('Step 4/4: Publish skipped (pass --publish to upload)');
+            }
+        } finally {
+            if ($shouldRestore) {
+                $this->info('Restoring development dependencies');
+                $this->composerInstallRestore($dryRun);
+            }
         }
 
         return array(
@@ -214,7 +231,7 @@ class Release extends AbstractCli
         echo "Orchestrates: bump → zip → release.json → optional GitHub publish.\n\n";
         echo "Usage:\n";
         echo "  wp-release patch\n";
-        echo "  wp-release minor --commit --tag --publish\n";
+        echo "  wp-release minor --commit --tag --publish --no-dev\n";
         echo "  wp-release patch --dry-run\n\n";
         echo "Config (composer.json):\n";
         echo "  \"extra\": {\n";
@@ -239,6 +256,7 @@ class Release extends AbstractCli
         echo "  --output-dir=DIR          Output directory (default: dist)\n";
         echo "  --publish                 Upload zip + release.json to GitHub\n";
         echo "  --commit / --tag / --push Git side effects (opt-in)\n";
+        echo "  --no-dev                  Install without require-dev before zip, restore after\n";
         echo "  --dry-run                 Print plan without writing\n";
         echo "  --help, -h                Show this help\n";
     }

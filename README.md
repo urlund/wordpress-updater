@@ -68,11 +68,11 @@ Image URLs must be publicly reachable; the CLI does not upload images.
 
 ```bash
 ./vendor/bin/wp-release patch
-./vendor/bin/wp-release minor --commit --tag --publish
+./vendor/bin/wp-release minor --commit --tag --publish --no-dev
 ./vendor/bin/wp-release patch --dry-run
 ```
 
-`wp-release` runs **bump → zip → release.json**. Pass `--publish` to upload to GitHub.
+`wp-release` runs **bump → zip → release.json**. Pass `--publish` to upload to GitHub. Pass `--no-dev` to install production Composer dependencies before packaging, then restore `require-dev` afterward.
 
 Publishing needs a token: `--token=…` or `GITHUB_TOKEN` (e.g. `export GITHUB_TOKEN=ghp_…`).
 
@@ -180,10 +180,10 @@ Each GitHub release should include the versioned ZIP and `release.json` (what `w
 | Command | Role |
 |---------|------|
 | `wp-version` | Bump version in plugin PHP or `style.css` |
-| `wp-zip` | Package `{slug}-{version}.zip` |
+| `wp-zip` | Package `{slug}-{version}.zip` (`--no-dev` for production vendor) |
 | `wp-json` | Generate `release.json` |
 | `wp-publish` | Upload ZIP + `release.json` to GitHub |
-| `wp-release` | Full pipeline |
+| `wp-release` | Full pipeline (`--no-dev` before zip, restore after) |
 
 ```bash
 ./vendor/bin/wp-version --plugin=my-plugin.php patch
@@ -208,7 +208,7 @@ Git flags on version bump are opt-in: `--commit`, `--tag` (requires `--commit`),
 }
 ```
 
-Then: `composer run wp-release -- patch --publish`.
+Then: `composer run wp-release -- patch --publish --no-dev`.
 
 ---
 
@@ -233,13 +233,13 @@ jobs:
         with:
           php-version: '8.1'
           extensions: curl, zip
-      - run: composer install --no-dev --optimize-autoloader
+      - run: composer install
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./vendor/bin/wp-release ${{ github.event.inputs.bump }} \
-            --commit --tag --push --publish
+            --commit --tag --push --publish --no-dev
 ```
 
 ---
