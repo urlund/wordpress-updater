@@ -141,7 +141,7 @@ Set `"sections_dir": "sections"` in `extra.wordpress-updater`.
 
 ## Runtime (WordPress)
 
-Attach `release.json` and the versioned ZIP to each GitHub release. The updater prefers `release.json`, then falls back to parsing the ZIP.
+Register the updater in your main plugin file or theme `functions.php`. It checks GitHub for newer releases and shows them in wp-admin.
 
 ### Plugin
 
@@ -170,6 +170,8 @@ GitHubThemeRepository::getInstance(
     ]
 );
 ```
+
+Each GitHub release should include the versioned ZIP and `release.json` (what `wp-release --publish` uploads). The updater prefers `release.json`, then falls back to parsing the ZIP if `release.json` does not exist (slower).
 
 ---
 
