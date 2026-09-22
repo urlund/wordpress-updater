@@ -86,13 +86,39 @@ Then: `composer run wp-release -- patch --publish`.
 | `tested` | WordPress “tested up to” |
 | `requires_php` | Minimum PHP version |
 | `config` | JSON file for banners/icons/upgrade notice |
-| `sections_dir` | Directory with description/changelog markdown |
+| `sections_dir` | Directory with section markdown/text files (default: directory of the plugin/theme file) |
 | `source` | Source directory to package (default: cwd) |
 | `output_dir` | Output directory (default: `dist`) |
 
 Download URLs are built as:
 
 `https://github.com/{repo}/releases/download/v{version}/{slug}-{version}.zip`
+
+### Section files
+
+`wp-json` fills `release.json` → `sections` from files in `sections_dir` (or `--sections-dir`). The first matching filename per section wins; content is lightly converted from Markdown to HTML.
+
+| Section | Filenames (first match) |
+|---------|-------------------------|
+| `description` | `description.md`, `description.txt`, `README.md` |
+| `installation` | `installation.md`, `installation.txt`, `INSTALL.md` |
+| `faq` | `faq.md`, `faq.txt`, `FAQ.md` |
+| `changelog` | `changelog.md`, `changelog.txt`, `CHANGELOG.md`, `CHANGES.md` |
+| `screenshots` | `screenshots.md`, `screenshots.txt` |
+| `other_notes` | `notes.md`, `notes.txt`, `NOTES.md` |
+
+Example layout:
+
+```text
+my-plugin/
+  my-plugin.php
+  sections/
+    description.md
+    changelog.md
+    faq.md
+```
+
+With `"sections_dir": "sections"` in `extra.wordpress-updater` (or `--sections-dir=sections`).
 
 ---
 
