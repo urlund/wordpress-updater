@@ -38,6 +38,8 @@ class Release extends AbstractCli
                 'push',
                 'bump-composer',
                 'no-dev',
+                'no-git',
+                'with-dev',
                 'dry-run',
                 'help',
             ),
@@ -106,6 +108,24 @@ class Release extends AbstractCli
 
         $outputDir = ProjectConfig::resolveOutputDir($this->options);
         $dryRun = $this->isDryRun();
+
+        $publishing = isset($this->options['publish']);
+        $skipGit = isset($this->options['no-git']);
+        $withDev = isset($this->options['with-dev']);
+
+        if ($publishing && !$skipGit) {
+            $this->options['commit'] = true;
+            $this->options['tag'] = true;
+            $this->options['push'] = true;
+            $this->info('Publishing: enabling --commit --tag --push (use --no-git to skip)');
+        }
+
+        if ($publishing && !$withDev) {
+            $this->options['no-dev'] = true;
+            $this->info('Publishing: enabling --no-dev (use --with-dev to skip)');
+        } elseif ($publishing && $withDev) {
+            unset($this->options['no-dev']);
+        }
 
         $this->info('Step 1/4: Bump version (' . $this->bumpType . ') [' . $type . ']');
         $bumpOptions = array(
@@ -231,7 +251,7 @@ class Release extends AbstractCli
         echo "Orchestrates: bump → zip → release.json → optional GitHub publish.\n\n";
         echo "Usage:\n";
         echo "  wp-release patch\n";
-        echo "  wp-release minor --commit --tag --publish --no-dev\n";
+        echo "  wp-release minor --publish\n";
         echo "  wp-release patch --dry-run\n\n";
         echo "Config (composer.json):\n";
         echo "  \"extra\": {\n";
@@ -254,8 +274,10 @@ class Release extends AbstractCli
         echo "  --repo=owner/repo         GitHub repository\n";
         echo "  --source=DIR              Source directory to package\n";
         echo "  --output-dir=DIR          Output directory (default: dist)\n";
-        echo "  --publish                 Upload zip + release.json to GitHub\n";
-        echo "  --commit / --tag / --push Git side effects (opt-in)\n";
+        echo "  --publish                 Upload to GitHub; also commit/tag/push and --no-dev\n";
+        echo "  --no-git                  With --publish: skip commit/tag/push\n";
+        echo "  --with-dev                With --publish: skip production Composer install\n";
+        echo "  --commit / --tag / --push Git side effects (opt-in without --publish)\n";
         echo "  --no-dev                  Install without require-dev before zip, restore after\n";
         echo "  --dry-run                 Print plan without writing\n";
         echo "  --help, -h                Show this help\n";

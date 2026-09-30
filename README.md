@@ -68,11 +68,20 @@ Image URLs must be publicly reachable; the CLI does not upload images.
 
 ```bash
 ./vendor/bin/wp-release patch
-./vendor/bin/wp-release minor --commit --tag --publish --no-dev
+./vendor/bin/wp-release minor --publish
 ./vendor/bin/wp-release patch --dry-run
 ```
 
-`wp-release` runs **bump → zip → release.json**. Pass `--publish` to upload to GitHub. Pass `--no-dev` to install production Composer dependencies before packaging, then restore `require-dev` afterward.
+`wp-release` runs **bump → zip → release.json**. Pass `--publish` to upload to GitHub.
+
+**Breaking change:** `--publish` also enables `--commit`, `--tag`, `--push`, and `--no-dev` by default (so the GitHub Source code archive matches the bump, and the ZIP uses production Composer dependencies). Opt out with:
+
+| Flag | Effect |
+|------|--------|
+| `--no-git` | Skip commit/tag/push (upload assets only) |
+| `--with-dev` | Skip production Composer install (package current `vendor/`) |
+
+Without `--publish`, git flags and `--no-dev` remain opt-in.
 
 Publishing needs a token: `--token=…`, `GITHUB_TOKEN` in the environment (e.g. `export GITHUB_TOKEN=ghp_…`), or `GITHUB_TOKEN=…` in a project `.env` (loaded automatically).
 
@@ -183,7 +192,7 @@ Each GitHub release should include the versioned ZIP and `release.json` (what `w
 | `wp-zip` | Package `{slug}-{version}.zip` (`--no-dev` for production vendor) |
 | `wp-json` | Generate `release.json` |
 | `wp-publish` | Upload ZIP + `release.json` to GitHub |
-| `wp-release` | Full pipeline (`--no-dev` before zip, restore after) |
+| `wp-release` | Full pipeline; `--publish` implies git + `--no-dev` (see [Release](#2-release)) |
 
 ```bash
 ./vendor/bin/wp-version --plugin=my-plugin.php patch
@@ -192,7 +201,7 @@ Each GitHub release should include the versioned ZIP and `release.json` (what `w
 ./vendor/bin/wp-publish --repo=owner/repo --zip=dist/my-plugin-1.0.1.zip --json=dist/release.json --create
 ```
 
-Git flags on version bump are opt-in: `--commit`, `--tag` (requires `--commit`), `--push`. Use `--bump-composer` only if you also want to bump Composer’s top-level `version`.
+Git flags on `wp-version` are opt-in: `--commit`, `--tag` (requires `--commit`), `--push`. On `wp-release`, those (and `--no-dev`) are implied by `--publish` unless you pass `--no-git` / `--with-dev`. Use `--bump-composer` only if you also want to bump Composer’s top-level `version`.
 
 ### Optional Composer scripts
 
@@ -208,7 +217,7 @@ Git flags on version bump are opt-in: `--commit`, `--tag` (requires `--commit`),
 }
 ```
 
-Then: `composer run wp-release -- patch --publish --no-dev`.
+Then: `composer run wp-release -- patch --publish`.
 
 ---
 
@@ -238,8 +247,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./vendor/bin/wp-release ${{ github.event.inputs.bump }} \
-            --commit --tag --push --publish --no-dev
+          ./vendor/bin/wp-release ${{ github.event.inputs.bump }} --publish
 ```
 
 ---
