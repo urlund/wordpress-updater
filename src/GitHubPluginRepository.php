@@ -43,6 +43,12 @@ class GitHubPluginRepository extends AbstractGitHubRepository
         add_filter('site_transient_update_plugins', array($this, 'site_transient_update_plugins'));
         add_filter('upgrader_pre_download', array($this, 'upgrader_pre_download'), 10, 3);
         add_action('upgrader_process_complete', array($this, 'upgrader_process_complete'), 10, 2);
+        add_action(
+            'in_plugin_update_message-' . $this->plugin,
+            array($this, 'in_plugin_update_message'),
+            10,
+            2
+        );
     }
 
     public function plugins_api($result, $action, $args)
@@ -125,6 +131,7 @@ class GitHubPluginRepository extends AbstractGitHubRepository
                 'url' => $metadata->author_profile ?? '',
                 'requires' => $metadata->requires ?? '',
                 'requires_php' => $metadata->requires_php ?? '',
+                'upgrade_notice' => $metadata->upgrade_notice ?? '',
             );
         } else {
             $value->no_update[$this->plugin] = (object) array(
@@ -156,5 +163,22 @@ class GitHubPluginRepository extends AbstractGitHubRepository
         if (in_array($this->plugin, $plugins, true)) {
             $this->client->clear_cache();
         }
+    }
+
+    /**
+     * Print upgrade_notice under the Plugins list update row.
+     *
+     * Core only fires in_plugin_update_message-{$file}; it does not render upgrade_notice itself.
+     *
+     * @param array  $plugin_data Plugin header data.
+     * @param object $response    Update response object from the transient.
+     */
+    public function in_plugin_update_message($plugin_data, $response)
+    {
+        if (empty($response->upgrade_notice)) {
+            return;
+        }
+
+        echo '<br />' . wp_kses_post(wpautop($response->upgrade_notice));
     }
 }

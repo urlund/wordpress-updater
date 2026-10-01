@@ -43,6 +43,12 @@ class GitHubThemeRepository extends AbstractGitHubRepository
         add_filter('pre_set_site_transient_update_themes', array($this, 'pre_set_site_transient_update_themes'));
         add_filter('upgrader_pre_download', array($this, 'upgrader_pre_download'), 10, 3);
         add_action('upgrader_process_complete', array($this, 'upgrader_process_complete'), 10, 2);
+        add_action(
+            'in_theme_update_message-' . $this->stylesheet,
+            array($this, 'in_theme_update_message'),
+            10,
+            2
+        );
     }
 
     public function themes_api($result, $action, $args)
@@ -114,6 +120,7 @@ class GitHubThemeRepository extends AbstractGitHubRepository
                 'package' => $metadata->download_link ?? '',
                 'requires' => $metadata->requires ?? '',
                 'requires_php' => $metadata->requires_php ?? '',
+                'upgrade_notice' => $metadata->upgrade_notice ?? '',
             );
         } else {
             $transient->no_update[$this->stylesheet] = array(
@@ -138,5 +145,24 @@ class GitHubThemeRepository extends AbstractGitHubRepository
         if (in_array($this->stylesheet, $themes, true)) {
             $this->client->clear_cache();
         }
+    }
+
+    /**
+     * Print upgrade_notice under the Themes list update row.
+     *
+     * @param \WP_Theme $theme    Theme object.
+     * @param array     $response Update response from the transient.
+     */
+    public function in_theme_update_message($theme, $response)
+    {
+        $notice = is_array($response)
+            ? ($response['upgrade_notice'] ?? '')
+            : ($response->upgrade_notice ?? '');
+
+        if (empty($notice)) {
+            return;
+        }
+
+        echo '<br />' . wp_kses_post(wpautop($notice));
     }
 }
