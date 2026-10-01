@@ -100,7 +100,11 @@ abstract class AbstractGitHubRepository
     }
 
     /**
-     * Markup for upgrade_notice inside the update-row <p>.
+     * Markup for upgrade_notice inside the update-row <p>, and restyle the notice box.
+     *
+     * Core hard-codes notice-warning/notice-error on the update row; there is no filter.
+     * A small inline script swaps the notice-* class from upgrade_severity. The notice
+     * text itself stays a neutral gray span (valid inside core's <p>).
      *
      * @param string $notice
      * @param string $severity info|warning|error (critical aliases error)
@@ -108,26 +112,28 @@ abstract class AbstractGitHubRepository
      */
     protected function format_upgrade_notice($notice, $severity = 'info')
     {
-        if ($notice === '' || $notice === null) {
-            return '';
-        }
-
         $severity = is_string($severity) ? strtolower($severity) : 'info';
-        $colors = array(
-            'info' => '#72aee6',
-            'warning' => '#dba617',
-            'error' => '#d63638',
-            'critical' => '#d63638',
+        $notice_classes = array(
+            'info' => 'notice-info',
+            'warning' => 'notice-warning',
+            'error' => 'notice-error',
+            'critical' => 'notice-error',
         );
-        if (!isset($colors[$severity])) {
+        if (!isset($notice_classes[$severity])) {
             $severity = 'info';
         }
 
-        return sprintf(
-            '<span style="display:block;margin:0.5em 0 0;padding:0.5em 0 0;border-top:1px solid %1$s;">%2$s</span>',
-            esc_attr($colors[$severity]),
+        $html = sprintf(
+            '<script>(function(){var s=document.currentScript,r=s&&s.closest("tr");if(!r)return;var m=r.querySelector(".update-message");if(!m)return;m.classList.remove("notice-warning","notice-error","notice-info","notice-success");m.classList.add(%s);})();</script>',
+            wp_json_encode($notice_classes[$severity])
+        );
+
+        $html .= sprintf(
+            '<span style="display:block;margin:0.5em 0 0;padding:0.5em 0 0;border-top:1px solid #c3c4c7;color:#646970;">%s</span>',
             wp_kses_post($notice)
         );
+
+        return $html;
     }
 
     abstract protected function init_hooks();
