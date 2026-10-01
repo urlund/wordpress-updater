@@ -121,6 +121,7 @@ class GitHubThemeRepository extends AbstractGitHubRepository
                 'requires' => $metadata->requires ?? '',
                 'requires_php' => $metadata->requires_php ?? '',
                 'upgrade_notice' => $metadata->upgrade_notice ?? '',
+                'upgrade_severity' => $metadata->upgrade_severity ?? 'info',
             );
         } else {
             $transient->no_update[$this->stylesheet] = array(
@@ -158,12 +159,14 @@ class GitHubThemeRepository extends AbstractGitHubRepository
         $notice = is_array($response)
             ? ($response['upgrade_notice'] ?? '')
             : ($response->upgrade_notice ?? '');
+        $severity = is_array($response)
+            ? ($response['upgrade_severity'] ?? 'info')
+            : ($response->upgrade_severity ?? 'info');
 
-        if (empty($notice)) {
+        if ($notice === '' || $notice === null) {
             return;
         }
 
-        // Hook runs inside core's <p>; avoid wpautop/<p> so CSS does not add extra icons.
-        echo '<hr>' . wp_kses_post($notice);
+        echo $this->format_upgrade_notice($notice, $severity);
     }
 }

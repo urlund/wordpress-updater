@@ -24,6 +24,7 @@ class ReleaseJsonGenerator extends AbstractCli
         'icons' => array(),
         'trunk' => '',
         'upgrade_notice' => '',
+        'upgrade_severity' => '',
         'screenshot_url' => '',
     );
 
@@ -130,6 +131,7 @@ class ReleaseJsonGenerator extends AbstractCli
             'banners' => $this->options['banners'] ?? $this->defaults['banners'],
             'icons' => $this->options['icons'] ?? $this->defaults['icons'],
             'upgrade_notice' => $this->options['upgrade_notice'] ?? $this->defaults['upgrade_notice'],
+            'upgrade_severity' => $this->options['upgrade_severity'] ?? $this->defaults['upgrade_severity'],
             'screenshot_url' => $this->options['screenshot_url'] ?? $this->defaults['screenshot_url'],
         );
 

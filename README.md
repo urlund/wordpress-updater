@@ -18,7 +18,7 @@ CLIs install to `vendor/bin/`. Composer does not inherit scripts from dependenci
 
 ### 1. Configure `composer.json`
 
-**Plugin** — details UI uses `banners`, `icons`, and optional `upgrade_notice`:
+**Plugin** — details UI uses `banners`, `icons`, and optional `upgrade_notice` / `upgrade_severity`:
 
 ```json
 {
@@ -38,7 +38,8 @@ CLIs install to `vendor/bin/`. Composer does not inherit scripts from dependenci
         "1x": "https://example.com/icon-128x128.png",
         "2x": "https://example.com/icon-256x256.png"
       },
-      "upgrade_notice": "Please update."
+      "upgrade_notice": "Please update.",
+      "upgrade_severity": "warning"
     }
   }
 }
@@ -114,6 +115,7 @@ Download URLs are built as:
 | `banners` | Banner URLs: `low` (772×250), `high` (1544×500) |
 | `icons` | Icon URLs: `1x`, `2x`, optional `svg` |
 | `upgrade_notice` | Text shown with the plugin update |
+| `upgrade_severity` | Notice accent: `info` (default), `warning`, `error` (`critical` aliases `error`) |
 
 ### Theme-only keys
 

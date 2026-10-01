@@ -99,5 +99,36 @@ abstract class AbstractGitHubRepository
         return $this->client->download_package();
     }
 
+    /**
+     * Markup for upgrade_notice inside the update-row <p>.
+     *
+     * @param string $notice
+     * @param string $severity info|warning|error (critical aliases error)
+     * @return string
+     */
+    protected function format_upgrade_notice($notice, $severity = 'info')
+    {
+        if ($notice === '' || $notice === null) {
+            return '';
+        }
+
+        $severity = is_string($severity) ? strtolower($severity) : 'info';
+        $colors = array(
+            'info' => '#72aee6',
+            'warning' => '#dba617',
+            'error' => '#d63638',
+            'critical' => '#d63638',
+        );
+        if (!isset($colors[$severity])) {
+            $severity = 'info';
+        }
+
+        return sprintf(
+            '<span style="display:block;margin:0.5em 0 0;padding:0.5em 0 0;border-top:1px solid %1$s;">%2$s</span>',
+            esc_attr($colors[$severity]),
+            wp_kses_post($notice)
+        );
+    }
+
     abstract protected function init_hooks();
 }

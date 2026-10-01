@@ -192,7 +192,7 @@ class Release extends AbstractCli
                 $jsonOptions['repo'] = $this->options['repo'];
                 $jsonOptions['download-url'] = ProjectConfig::buildDownloadUrl($this->options['repo'], $slug, $version);
             }
-            foreach (array('tested', 'requires-php', 'sections-dir', 'banners', 'icons', 'upgrade_notice', 'screenshot_url') as $key) {
+            foreach (array('tested', 'requires-php', 'sections-dir', 'banners', 'icons', 'upgrade_notice', 'upgrade_severity', 'screenshot_url') as $key) {
                 if (!empty($this->options[$key])) {
                     $jsonOptions[$key] = $this->options[$key];
                 }

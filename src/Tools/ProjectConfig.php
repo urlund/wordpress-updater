@@ -94,6 +94,7 @@ class ProjectConfig
             'banners' => 'banners',
             'icons' => 'icons',
             'upgrade_notice' => 'upgrade_notice',
+            'upgrade_severity' => 'upgrade_severity',
             'screenshot_url' => 'screenshot_url',
         );
 

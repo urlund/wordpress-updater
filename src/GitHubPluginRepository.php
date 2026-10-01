@@ -132,6 +132,7 @@ class GitHubPluginRepository extends AbstractGitHubRepository
                 'requires' => $metadata->requires ?? '',
                 'requires_php' => $metadata->requires_php ?? '',
                 'upgrade_notice' => $metadata->upgrade_notice ?? '',
+                'upgrade_severity' => $metadata->upgrade_severity ?? 'info',
             );
         } else {
             $value->no_update[$this->plugin] = (object) array(
@@ -179,7 +180,9 @@ class GitHubPluginRepository extends AbstractGitHubRepository
             return;
         }
 
-        // Hook runs inside core's <p>; avoid wpautop/<p> so CSS does not add extra icons.
-        echo '<hr>' . wp_kses_post($response->upgrade_notice);
+        echo $this->format_upgrade_notice(
+            $response->upgrade_notice,
+            $response->upgrade_severity ?? 'info'
+        );
     }
 }
