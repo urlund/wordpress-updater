@@ -98,25 +98,51 @@ class GitHubPluginRepository extends AbstractGitHubRepository
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
         $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $this->plugin, false, false);
-        if (version_compare($plugin_data['Version'], $metadata->version, '>=')) {
-            return $value;
+        $current_version = $plugin_data['Version'];
+
+        if (!isset($value->response) || !is_array($value->response)) {
+            $value->response = array();
+        }
+        if (!isset($value->no_update) || !is_array($value->no_update)) {
+            $value->no_update = array();
         }
 
-        if (!empty($metadata->requires) && version_compare($metadata->requires, get_bloginfo('version'), '>')) {
-            return $value;
-        }
+        unset($value->response[$this->plugin], $value->no_update[$this->plugin]);
 
-        $value->response[$this->plugin] = (object) array(
-            'id' => 'github.com/' . $this->repository,
-            'slug' => $this->config['slug'],
-            'plugin' => $this->plugin,
-            'new_version' => $metadata->version,
-            'tested' => $metadata->tested ?? '',
-            'package' => $metadata->download_link ?? '',
-            'url' => $metadata->author_profile ?? '',
-            'requires' => $metadata->requires ?? '',
-            'requires_php' => $metadata->requires_php ?? '',
-        );
+        $update_available = version_compare($current_version, $metadata->version, '<');
+        $wp_compatible = empty($metadata->requires)
+            || version_compare($metadata->requires, get_bloginfo('version'), '<=');
+
+        // no_update is required for the Enable auto-updates UI when current.
+        if ($update_available && $wp_compatible) {
+            $value->response[$this->plugin] = (object) array(
+                'id' => 'github.com/' . $this->repository,
+                'slug' => $this->config['slug'],
+                'plugin' => $this->plugin,
+                'new_version' => $metadata->version,
+                'tested' => $metadata->tested ?? '',
+                'package' => $metadata->download_link ?? '',
+                'url' => $metadata->author_profile ?? '',
+                'requires' => $metadata->requires ?? '',
+                'requires_php' => $metadata->requires_php ?? '',
+            );
+        } else {
+            $value->no_update[$this->plugin] = (object) array(
+                'id' => 'github.com/' . $this->repository,
+                'slug' => $this->config['slug'],
+                'plugin' => $this->plugin,
+                'new_version' => $current_version,
+                'tested' => $metadata->tested ?? '',
+                'package' => '',
+                'url' => $metadata->author_profile ?? '',
+                'requires' => $metadata->requires ?? '',
+                'requires_php' => $metadata->requires_php ?? '',
+                'icons' => is_array($metadata->icons ?? null) ? $metadata->icons : array(),
+                'banners' => is_array($metadata->banners ?? null) ? $metadata->banners : array(),
+                'banners_rtl' => array(),
+                'compatibility' => new \stdClass(),
+            );
+        }
 
         return $value;
     }

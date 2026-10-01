@@ -83,6 +83,9 @@ class GitHubThemeRepository extends AbstractGitHubRepository
         if (!isset($transient->response) || !is_array($transient->response)) {
             $transient->response = array();
         }
+        if (!isset($transient->no_update) || !is_array($transient->no_update)) {
+            $transient->no_update = array();
+        }
 
         $metadata = $this->client->get_metadata();
         if (empty($metadata)) {
@@ -95,22 +98,33 @@ class GitHubThemeRepository extends AbstractGitHubRepository
         }
 
         $current = $theme->get('Version');
-        if (version_compare($current, $metadata->version, '>=')) {
-            return $transient;
-        }
 
-        if (!empty($metadata->requires) && version_compare($metadata->requires, get_bloginfo('version'), '>')) {
-            return $transient;
-        }
+        unset($transient->response[$this->stylesheet], $transient->no_update[$this->stylesheet]);
 
-        $transient->response[$this->stylesheet] = array(
-            'theme' => $this->stylesheet,
-            'new_version' => $metadata->version,
-            'url' => $metadata->author_profile ?? '',
-            'package' => $metadata->download_link ?? '',
-            'requires' => $metadata->requires ?? '',
-            'requires_php' => $metadata->requires_php ?? '',
-        );
+        $update_available = version_compare($current, $metadata->version, '<');
+        $wp_compatible = empty($metadata->requires)
+            || version_compare($metadata->requires, get_bloginfo('version'), '<=');
+
+        // no_update is required for the Enable auto-updates UI when current.
+        if ($update_available && $wp_compatible) {
+            $transient->response[$this->stylesheet] = array(
+                'theme' => $this->stylesheet,
+                'new_version' => $metadata->version,
+                'url' => $metadata->author_profile ?? '',
+                'package' => $metadata->download_link ?? '',
+                'requires' => $metadata->requires ?? '',
+                'requires_php' => $metadata->requires_php ?? '',
+            );
+        } else {
+            $transient->no_update[$this->stylesheet] = array(
+                'theme' => $this->stylesheet,
+                'new_version' => $current,
+                'url' => $metadata->author_profile ?? '',
+                'package' => '',
+                'requires' => $metadata->requires ?? '',
+                'requires_php' => $metadata->requires_php ?? '',
+            );
+        }
 
         return $transient;
     }
