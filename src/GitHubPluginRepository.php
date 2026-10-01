@@ -180,6 +180,6 @@ class GitHubPluginRepository extends AbstractGitHubRepository
         }
 
         // Hook runs inside core's <p>; avoid wpautop/<p> so CSS does not add extra icons.
-        echo '<br />' . wp_kses_post($response->upgrade_notice);
+        echo '<hr>' . wp_kses_post($response->upgrade_notice);
     }
 }
