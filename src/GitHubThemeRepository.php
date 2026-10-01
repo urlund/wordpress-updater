@@ -41,6 +41,7 @@ class GitHubThemeRepository extends AbstractGitHubRepository
     {
         add_filter('themes_api', array($this, 'themes_api'), 20, 3);
         add_filter('pre_set_site_transient_update_themes', array($this, 'pre_set_site_transient_update_themes'));
+        add_filter('upgrader_pre_download', array($this, 'upgrader_pre_download'), 10, 3);
         add_action('upgrader_process_complete', array($this, 'upgrader_process_complete'), 10, 2);
     }
 

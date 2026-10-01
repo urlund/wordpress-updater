@@ -41,6 +41,7 @@ class GitHubPluginRepository extends AbstractGitHubRepository
     {
         add_filter('plugins_api', array($this, 'plugins_api'), 20, 3);
         add_filter('site_transient_update_plugins', array($this, 'site_transient_update_plugins'));
+        add_filter('upgrader_pre_download', array($this, 'upgrader_pre_download'), 10, 3);
         add_action('upgrader_process_complete', array($this, 'upgrader_process_complete'), 10, 2);
     }
 

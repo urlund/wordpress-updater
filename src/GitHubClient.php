@@ -136,13 +136,34 @@ class GitHubClient
     }
 
     /**
+     * Public package URL for WordPress update metadata.
+     *
+     * Always returns browser_download_url so public installs work without
+     * interception. Private repos with auth must intercept via
+     * upgrader_pre_download — browser_download_url 404s with fine-grained PATs.
+     *
      * @return string
      */
     public function get_download_link()
     {
+        $asset = $this->find_zip_asset();
+        if (empty($asset)) {
+            return '';
+        }
+
+        return $asset['browser_download_url'] ?? '';
+    }
+
+    /**
+     * Find the ZIP release asset for this package.
+     *
+     * @return array|null
+     */
+    public function find_zip_asset()
+    {
         $data = $this->get_data();
         if (empty($data) || empty($data['assets'])) {
-            return '';
+            return null;
         }
 
         $assets_names = array_map(function ($asset) {
@@ -159,7 +180,7 @@ class GitHubClient
         foreach ($search_names as $name) {
             $index = array_search($name, $assets_names, true);
             if ($index !== false) {
-                return $data['assets'][$index]['browser_download_url'];
+                return $data['assets'][$index];
             }
         }
 
@@ -168,12 +189,135 @@ class GitHubClient
             foreach (array($slug . '-' . $version . '.zip', $version . '.zip') as $name) {
                 $index = array_search($name, $assets_names, true);
                 if ($index !== false) {
-                    return $data['assets'][$index]['browser_download_url'];
+                    return $data['assets'][$index];
                 }
             }
         }
 
-        return '';
+        return null;
+    }
+
+    /**
+     * Whether a WordPress package URL matches this client's ZIP asset.
+     *
+     * @param string $package
+     * @return bool
+     */
+    public function matches_package_url($package)
+    {
+        if ($package === '' || $package === false || $package === null) {
+            return false;
+        }
+
+        $asset = $this->find_zip_asset();
+        if (empty($asset)) {
+            return false;
+        }
+
+        return $package === ($asset['browser_download_url'] ?? '')
+            || $package === ($asset['url'] ?? '');
+    }
+
+    /**
+     * Download the ZIP package to a local temp file (API asset URL + auth).
+     *
+     * @return string|\WP_Error Path to temp file
+     */
+    public function download_package()
+    {
+        $asset = $this->find_zip_asset();
+        if (empty($asset)) {
+            return new \WP_Error('github_zip_not_found', 'ZIP asset not found in GitHub release');
+        }
+
+        return $this->download_asset_to_file($asset);
+    }
+
+    /**
+     * Download a release asset (public or private).
+     *
+     * Prefer the API asset URL. browser_download_url 404s on private repos
+     * with fine-grained PATs even when Authorization is sent.
+     *
+     * @param array $asset Single item from release "assets".
+     * @return array|\WP_Error wp_remote_get response
+     */
+    private function request_release_asset(array $asset)
+    {
+        $headers = array(
+            'Accept' => 'application/octet-stream',
+        );
+
+        if (!empty($this->config['auth'])) {
+            $headers['Authorization'] = 'Bearer ' . $this->config['auth'];
+        }
+
+        $url = !empty($asset['url']) ? $asset['url'] : ($asset['browser_download_url'] ?? '');
+        if ($url === '') {
+            return new \WP_Error('missing_asset_url', 'Release asset has no download URL');
+        }
+
+        return wp_remote_get($url, array(
+            'timeout'     => $this->config['timeout'],
+            'headers'     => $headers,
+            'redirection' => 5,
+        ));
+    }
+
+    /**
+     * Stream a release asset to a temporary file.
+     *
+     * @param array $asset
+     * @return string|\WP_Error Path to temp file
+     */
+    public function download_asset_to_file(array $asset)
+    {
+        $url = !empty($asset['url']) ? $asset['url'] : ($asset['browser_download_url'] ?? '');
+        if ($url === '') {
+            return new \WP_Error('missing_asset_url', 'Release asset has no download URL');
+        }
+
+        $tmp = wp_tempnam($asset['name'] ?? 'github-asset');
+        if (!$tmp) {
+            return new \WP_Error('temp_file_failed', 'Could not create temporary file');
+        }
+
+        $headers = array(
+            'Accept' => 'application/octet-stream',
+        );
+        if (!empty($this->config['auth'])) {
+            $headers['Authorization'] = 'Bearer ' . $this->config['auth'];
+        }
+
+        $response = wp_remote_get($url, array(
+            'timeout'     => $this->config['timeout'],
+            'headers'     => $headers,
+            'redirection' => 5,
+            'stream'      => true,
+            'filename'    => $tmp,
+        ));
+
+        if (is_wp_error($response)) {
+            @unlink($tmp);
+            return $response;
+        }
+
+        $code = (int) wp_remote_retrieve_response_code($response);
+        if ($code !== 200) {
+            @unlink($tmp);
+            $this->handle_api_error($response, 'downloading release asset ' . ($asset['name'] ?? ''));
+            return new \WP_Error(
+                'github_asset_download_failed',
+                sprintf('GitHub asset download failed (HTTP %d)', $code)
+            );
+        }
+
+        if (!file_exists($tmp) || filesize($tmp) === 0) {
+            @unlink($tmp);
+            return new \WP_Error('github_asset_empty', 'GitHub asset download returned empty body');
+        }
+
+        return $tmp;
     }
 
     public function clear_cache()
@@ -209,18 +353,7 @@ class GitHubClient
                 continue;
             }
 
-            $headers = array('Accept' => 'application/json');
-            if (!empty($this->config['auth'])) {
-                $headers['Authorization'] = 'Bearer ' . $this->config['auth'];
-            }
-
-            $response = wp_remote_get(
-                $asset['browser_download_url'],
-                array(
-                    'timeout' => $this->config['timeout'],
-                    'headers' => $headers,
-                )
-            );
+            $response = $this->request_release_asset($asset);
 
             if (is_wp_error($response) || !isset($response['response']['code']) || (int) $response['response']['code'] !== 200) {
                 $this->handle_api_error($response, 'fetching release.json asset');
@@ -282,7 +415,12 @@ class GitHubClient
             return false;
         }
 
-        $temp_file = download_url($download_link);
+        $asset = $this->find_zip_asset();
+        if (!empty($asset)) {
+            $temp_file = $this->download_asset_to_file($asset);
+        } else {
+            $temp_file = download_url($download_link);
+        }
         if (is_wp_error($temp_file)) {
             $this->log_error('Failed to download ZIP', array('error' => $temp_file->get_error_message()));
             return false;

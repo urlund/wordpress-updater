@@ -72,5 +72,32 @@ abstract class AbstractGitHubRepository
         );
     }
 
+    /**
+     * Authenticated private installs: download ZIP via API asset URL.
+     *
+     * Core would otherwise hit browser_download_url with no working auth.
+     *
+     * @param bool|\WP_Error|string $reply
+     * @param string                $package
+     * @param \WP_Upgrader          $upgrader
+     * @return bool|\WP_Error|string
+     */
+    public function upgrader_pre_download($reply, $package, $upgrader)
+    {
+        if ($reply !== false) {
+            return $reply;
+        }
+
+        if (empty($this->config['auth'])) {
+            return false;
+        }
+
+        if (!$this->client->matches_package_url($package)) {
+            return false;
+        }
+
+        return $this->client->download_package();
+    }
+
     abstract protected function init_hooks();
 }
