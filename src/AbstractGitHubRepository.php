@@ -119,14 +119,18 @@ abstract class AbstractGitHubRepository
             'error' => 'notice-error',
             'critical' => 'notice-error',
         );
+        
+        $html = '';
         if (!isset($notice_classes[$severity])) {
-            $severity = 'info';
+            $severity = 'warning';
         }
 
-        $html = sprintf(
-            '<script>(function(){var s=document.currentScript,r=s&&s.closest("tr");if(!r)return;var m=r.querySelector(".update-message");if(!m)return;m.classList.remove("notice-warning","notice-error","notice-info","notice-success");m.classList.add(%s);})();</script>',
-            wp_json_encode($notice_classes[$severity])
-        );
+        if ($severity !== 'warning') {
+            $html = sprintf(
+                '<script>(function(){var s=document.currentScript,r=s&&s.closest("tr");if(!r)return;var m=r.querySelector(".update-message");if(!m)return;m.classList.remove("notice-warning","notice-error","notice-info","notice-success");m.classList.add(%s);})();</script>',
+                wp_json_encode($notice_classes[$severity])
+            );
+        }
 
         $html .= sprintf(
             '<span style="display:block;margin:0.5em 0 0;padding:0.5em 0 0;border-top:1px solid #c3c4c7;color:#646970;">%s</span>',

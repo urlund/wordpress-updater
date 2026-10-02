@@ -115,7 +115,7 @@ Download URLs are built as:
 | `banners` | Banner URLs: `low` (772×250), `high` (1544×500) |
 | `icons` | Icon URLs: `1x`, `2x`, optional `svg` |
 | `upgrade_notice` | Extra text under the update row (neutral gray) |
-| `upgrade_severity` | Styles the update notice box: `info` (default), `warning`, `error` (`critical` aliases `error`) |
+| `upgrade_severity` | Styles the update notice box: `warning` (default), `info`, `error` (`critical` aliases `error`) |
 
 ### Theme-only keys
 
